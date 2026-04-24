@@ -69,10 +69,21 @@ jobs:
       # Negative assertion: M3 clippy MUST warn. If it stops warning, the
       # lesson is broken.
       - name: Confirm M3 planted lint still fires
+        shell: bash
         run: |
-          if cargo clippy -p m3-lint --all-targets --locked -- -D warnings 2>&1 | tee /tmp/m3-clippy.txt; then
+          set +e
+          cargo clippy -p m3-lint --all-targets --locked -- -D warnings > /tmp/m3-clippy.txt 2>&1
+          status=$?
+          set -e
+          echo "--- clippy output (exit=$status) ---"
+          cat /tmp/m3-clippy.txt
+          echo "--- end clippy output ---"
+          if [ "$status" -eq 0 ]; then
             echo "ERROR: m3-lint clippy passed — the planted lesson is broken." >&2
             exit 1
           fi
-          grep -q ptr_arg /tmp/m3-clippy.txt
-          grep -q needless_return /tmp/m3-clippy.txt
+          grep -q "ptr_arg" /tmp/m3-clippy.txt \
+            || { echo "ERROR: clippy output missing ptr_arg lint"; exit 1; }
+          grep -q "needless_return" /tmp/m3-clippy.txt \
+            || { echo "ERROR: clippy output missing needless_return lint"; exit 1; }
+          echo "M3 planted lints still fire — lesson intact."
