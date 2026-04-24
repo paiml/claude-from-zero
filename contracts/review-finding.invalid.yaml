@@ -1,0 +1,21 @@
+# contracts/review-finding.invalid.yaml
+#
+# Deliberately violates invariant #1 from review-finding.yaml:
+# "If verdict is 'approve', findings.severity must not contain 'error'."
+#
+# This is the exact failure mode /review-demo must catch — a sub-agent
+# that flags a critical bug and then approves the diff anyway. The
+# validate-finding binary rejects this fixture with exit code 2.
+
+reviewer: explore-agent-pass-2
+target: m4-review/src/bin/diff_target.rs
+findings:
+  - severity: error
+    line: 40
+    message: "i32::MIN squared overflows; checked_mul catches it but the error path exits 2, which may be too aggressive for a library wrapper."
+    category: correctness
+verdict: approve
+rationale: >-
+  Overall the diff_target.rs logic is sound, though the overflow path
+  could surface a typed error instead of process::exit. I'd approve
+  with a follow-up to refactor the error path.

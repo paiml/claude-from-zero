@@ -38,6 +38,12 @@ cargo clippy -p m3-lint
 
 # Review the M4 target against the contract schema
 cat contracts/review-finding.yaml
+
+# Validate a sub-agent's YAML review against the runtime contract
+cargo run -p m4-review --bin validate-finding -- \
+    contracts/review-finding.valid.yaml       # exit 0, contract-OK marker
+cargo run -p m4-review --bin validate-finding -- \
+    contracts/review-finding.invalid.yaml     # exit 2, invariant violation
 ```
 
 ## Go deeper

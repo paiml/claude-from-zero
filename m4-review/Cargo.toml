@@ -5,6 +5,15 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
+[dependencies]
+serde = { workspace = true }
+serde_yaml = { workspace = true }
+thiserror = { workspace = true }
+
 [[bin]]
 name = "diff-target"
 path = "src/bin/diff_target.rs"
+
+[[bin]]
+name = "validate-finding"
+path = "src/bin/validate_finding.rs"
