@@ -1,5 +1,11 @@
 # claude-from-zero
 
+<p align="center">
+  <img src="assets/hero.svg" alt="Claude Code → Skills → Provable contracts" width="100%"/>
+</p>
+
+[![CI](https://github.com/paiml/claude-from-zero/actions/workflows/ci.yml/badge.svg)](https://github.com/paiml/claude-from-zero/actions/workflows/ci.yml)
+
 Companion repository for the **Claude from Zero** Coursera course —
 course 9 of the [Rust for Data Engineering](https://www.coursera.org/specializations/rust-for-data-engineering)
 specialization.

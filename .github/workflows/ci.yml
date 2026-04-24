@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry + target
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: claude-from-zero
+          cache-all-crates: true
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Build workspace
+        run: cargo build --workspace --locked
+
+      - name: Test workspace
+        run: cargo test --workspace --locked
+
+      # m3-lint is excluded: its clippy warnings are the M3 lesson.
+      - name: Clippy (m2-hello + m4-review, deny warnings)
+        run: cargo clippy -p m2-hello -p m4-review --all-targets --locked -- -D warnings
+
+      - name: Install pv (aprender-contracts-cli)
+        run: cargo install --locked aprender-contracts-cli
+
+      - name: Validate square-kernel contract via pv
+        run: pv validate contracts/square-kernel-v1.yaml
+
+      # Runtime contract proofs — binaries must exit 0 with the marker.
+      - name: Prove M2 contract at runtime
+        run: |
+          out=$(cargo run --locked -q -p m2-hello)
+          echo "$out"
+          echo "$out" | grep -q "contract: add is commutative, associative, has identity 0 — OK"
+
+      - name: Prove M4 contract at runtime
+        run: |
+          out=$(cargo run --locked -q -p m4-review --bin diff-target -- 7 2>&1)
+          echo "$out"
+          echo "$out" | grep -q "^49$"
+          echo "$out" | grep -q "contract: square-kernel-v1 holds for n=7"
+
+      # Negative assertion: M3 clippy MUST warn. If it stops warning, the
+      # lesson is broken.
+      - name: Confirm M3 planted lint still fires
+        run: |
+          if cargo clippy -p m3-lint --all-targets --locked -- -D warnings 2>&1 | tee /tmp/m3-clippy.txt; then
+            echo "ERROR: m3-lint clippy passed — the planted lesson is broken." >&2
+            exit 1
+          fi
+          grep -q ptr_arg /tmp/m3-clippy.txt
+          grep -q needless_return /tmp/m3-clippy.txt

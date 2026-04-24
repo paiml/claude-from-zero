@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  GRID PROTOCOL MANIFEST
+    canvas: 1200x600
+    text_elements: 0
+    zones: 3 (terminal / skills / contracts)
+    palette: #0d1117 bg, #4a9eff blue, #9f8fef purple, #36b37e green
+    stroke_width_min: 4.0
+    fill_opacity_min: 0.25
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+
+  <!-- Background -->
+  <rect width="1200" height="600" fill="#0d1117"/>
+
+  <!-- Gradient backdrops per zone (radial glow) -->
+  <defs>
+    <radialGradient id="glow-blue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4a9eff" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#4a9eff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow-purple" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9f8fef" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#9f8fef" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow-green" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#36b37e" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#36b37e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <circle cx="200" cy="300" r="210" fill="url(#glow-blue)"/>
+  <circle cx="600" cy="300" r="210" fill="url(#glow-purple)"/>
+  <circle cx="1000" cy="300" r="210" fill="url(#glow-green)"/>
+
+  <!-- Zone dividers -->
+  <line x1="400" y1="120" x2="400" y2="480" stroke="#30363d" stroke-width="4" stroke-dasharray="6 10" opacity="0.55"/>
+  <line x1="800" y1="120" x2="800" y2="480" stroke="#30363d" stroke-width="4" stroke-dasharray="6 10" opacity="0.55"/>
+
+  <!-- Connecting arrows between zones -->
+  <g id="arrow-zone-1-to-2" stroke="#4a9eff" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.55">
+    <line x1="340" y1="300" x2="460" y2="300"/>
+    <polyline points="440,285 460,300 440,315"/>
+  </g>
+  <g id="arrow-zone-2-to-3" stroke="#9f8fef" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.55">
+    <line x1="740" y1="300" x2="860" y2="300"/>
+    <polyline points="840,285 860,300 840,315"/>
+  </g>
+
+  <!-- =================================================================== -->
+  <!-- Zone 1: Terminal (Claude Code) -->
+  <!-- =================================================================== -->
+  <g id="terminal">
+    <!-- Monitor frame -->
+    <rect x="100" y="170" width="200" height="260" rx="14" ry="14"
+          fill="#161b22" fill-opacity="0.85"
+          stroke="#4a9eff" stroke-width="5"/>
+
+    <!-- Title bar -->
+    <rect x="100" y="170" width="200" height="36" rx="14" ry="14"
+          fill="#1a1d23" fill-opacity="0.95"/>
+    <rect x="100" y="190" width="200" height="16"
+          fill="#1a1d23" fill-opacity="0.95"/>
+
+    <!-- Traffic lights -->
+    <circle cx="122" cy="188" r="6" fill="#ff5630" fill-opacity="0.85"/>
+    <circle cx="142" cy="188" r="6" fill="#ffab00" fill-opacity="0.85"/>
+    <circle cx="162" cy="188" r="6" fill="#36b37e" fill-opacity="0.85"/>
+
+    <!-- Prompt arrow "❯" -->
+    <polyline points="130,250 155,270 130,290"
+              fill="none" stroke="#4a9eff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Cursor block -->
+    <rect x="175" y="256" width="28" height="28"
+          fill="#a5d6ff" fill-opacity="0.55"/>
+
+    <!-- Output lines -->
+    <line x1="130" y1="325" x2="260" y2="325" stroke="#4a9eff" stroke-width="4" stroke-linecap="round" opacity="0.45"/>
+    <line x1="130" y1="355" x2="230" y2="355" stroke="#4a9eff" stroke-width="4" stroke-linecap="round" opacity="0.35"/>
+    <line x1="130" y1="385" x2="250" y2="385" stroke="#4a9eff" stroke-width="4" stroke-linecap="round" opacity="0.30"/>
+  </g>
+
+  <!-- =================================================================== -->
+  <!-- Zone 2: Skill badge (Slash Commands) -->
+  <!-- =================================================================== -->
+  <g id="skill-badge">
+    <!-- Outer ring -->
+    <circle cx="600" cy="300" r="120"
+            fill="#161b22" fill-opacity="0.85"
+            stroke="#9f8fef" stroke-width="6"/>
+
+    <!-- Inner ring -->
+    <circle cx="600" cy="300" r="90"
+            fill="none"
+            stroke="#b8acff" stroke-width="3.5" stroke-dasharray="8 6" opacity="0.7"/>
+
+    <!-- Big slash "/" — two parallel bold diagonals -->
+    <line x1="555" y1="360" x2="645" y2="240"
+          stroke="#9f8fef" stroke-width="12" stroke-linecap="round"/>
+    <line x1="575" y1="375" x2="665" y2="255"
+          stroke="#b8acff" stroke-width="6" stroke-linecap="round" opacity="0.55"/>
+
+    <!-- Decorative corner dots (skill registry nodes) -->
+    <circle cx="520" cy="220" r="9" fill="#9f8fef" fill-opacity="0.45"/>
+    <circle cx="680" cy="220" r="9" fill="#9f8fef" fill-opacity="0.45"/>
+    <circle cx="520" cy="380" r="9" fill="#9f8fef" fill-opacity="0.45"/>
+    <circle cx="680" cy="380" r="9" fill="#9f8fef" fill-opacity="0.45"/>
+
+    <!-- Spokes from center to corner dots -->
+    <g stroke="#9f8fef" stroke-width="3.5" opacity="0.40">
+      <line x1="600" y1="300" x2="520" y2="220"/>
+      <line x1="600" y1="300" x2="680" y2="220"/>
+      <line x1="600" y1="300" x2="520" y2="380"/>
+      <line x1="600" y1="300" x2="680" y2="380"/>
+    </g>
+  </g>
+
+  <!-- =================================================================== -->
+  <!-- Zone 3: Contract shield + checkmark (Provable Contracts / pv) -->
+  <!-- =================================================================== -->
+  <g id="contract-shield">
+    <!-- Shield outline -->
+    <path d="M 1000 170
+             L 1110 210
+             L 1110 320
+             Q 1110 400, 1000 440
+             Q 890 400, 890 320
+             L 890 210 Z"
+          fill="#161b22" fill-opacity="0.85"
+          stroke="#36b37e" stroke-width="6"
+          stroke-linejoin="round"/>
+
+    <!-- Inner shield accent line -->
+    <path d="M 1000 200
+             L 1085 230
+             L 1085 320
+             Q 1085 380, 1000 412
+             Q 915 380, 915 320
+             L 915 230 Z"
+          fill="none"
+          stroke="#7ee787" stroke-width="3.5" opacity="0.55"/>
+
+    <!-- Big checkmark -->
+    <polyline points="945,310 990,355 1065,265"
+              fill="none"
+              stroke="#36b37e" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="945,310 990,355 1065,265"
+              fill="none"
+              stroke="#7ee787" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"/>
+
+    <!-- Contract "document" lines below shield -->
+    <line x1="945" y1="395" x2="1055" y2="395" stroke="#36b37e" stroke-width="4" stroke-linecap="round" opacity="0.40"/>
+    <line x1="960" y1="415" x2="1040" y2="415" stroke="#36b37e" stroke-width="4" stroke-linecap="round" opacity="0.30"/>
+  </g>
+
+  <!-- =================================================================== -->
+  <!-- Corner accent dots (per bold design rules) -->
+  <!-- =================================================================== -->
+  <g id="corner-dots" fill="#4a9eff" fill-opacity="0.55">
+    <circle cx="40" cy="40" r="10"/>
+    <circle cx="1160" cy="40" r="10"/>
+    <circle cx="40" cy="560" r="10"/>
+    <circle cx="1160" cy="560" r="10"/>
+  </g>
+
+</svg>
