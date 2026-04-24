@@ -20,7 +20,7 @@ showing skills + sub-agents + contracts + pmat working together.
 | `m3-lint/` | M3 demo: crate with a planted clippy warning for `/lint-demo` |
 | `m4-review/` | M4 demo: target binary for parallel sub-agent review |
 | `.claude/commands/` | Skills — one per module that has a skill demo |
-| `contracts/` | YAML invariant files that gate sub-agent output |
+| `contracts/` | aprender-format YAML kernel contracts validated by `pv` |
 
 ## Commands
 
@@ -29,6 +29,7 @@ cargo build --workspace        # compile everything
 cargo test --workspace         # run tests
 cargo clippy --workspace       # lint
 cargo run -p m2-hello          # prove the M2 contract
+pv validate contracts/square-kernel-v1.yaml   # M4 gate
 ```
 
 ## Quality gates
@@ -49,5 +50,11 @@ cargo run -p m2-hello          # prove the M2 contract
   out to a Rust binary (here: `cargo clippy`) and shape the output;
   they never reimplement logic in the skill prompt.
 - **Contract-gated sub-agents.** When delegating to a sub-agent,
-  pass the relevant `contracts/*.yaml` in the prompt and verify
-  the returned output against the schema before accepting.
+  pass the relevant `contracts/*.yaml` in the prompt and require
+  the sub-agent to run `pv validate` on the contract before
+  returning a verdict. A verdict that contradicts a documented
+  invariant is rejected by the parent.
+- **`pv` is the provable-contracts CLI.** Contracts in `contracts/`
+  are authored in the aprender kernel-contract YAML format and
+  validated with `pv validate`. Never hand-roll a parallel YAML
+  validator — extend the contract and re-run `pv` instead.

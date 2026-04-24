@@ -1,22 +1,21 @@
 //! Module 4 demo — target binary for parallel sub-agent review.
 //!
 //! Provable contract: the CLI consumes one positional integer argument,
-//! squares it, and prints the result. Missing argument exits with code
-//! 2 and an error message on stderr. Exit code 0 implies the integer
-//! was parsed, squared without overflow, and the result was printed.
+//! squares it via `m4_review::square` (contract: square-kernel-v1),
+//! and prints the result. Missing argument or overflow exits with
+//! code 2 and an error message on stderr. Exit code 0 implies the
+//! integer parsed, squared without overflow, and was printed.
 //!
 //! A learner asks Claude Code to spawn two parallel sub-agents to
-//! review this file against `contracts/review-finding.yaml`. Each
-//! sub-agent returns YAML; the parent validates against the schema
-//! and rejects any response that violates a documented invariant
-//! (for example, `approve` verdict alongside a severity=error finding).
+//! review this file against `contracts/square-kernel-v1.yaml`. Each
+//! sub-agent runs `pv validate` + `pv status` on the contract,
+//! inspects the implementation, and returns a verdict. The parent
+//! rejects any verdict that contradicts a documented invariant.
 
 use std::env;
 use std::process;
 
-fn square(n: i32) -> Option<i32> {
-    n.checked_mul(n)
-}
+use m4_review::square;
 
 fn parse_arg(args: &[String]) -> Result<i32, String> {
     let raw = args
@@ -44,9 +43,16 @@ fn main() {
 
     println!("{squared}");
 
-    // Contract proof: if we reach this line, every precondition held.
-    // The assertion restates the invariant so a reviewer cannot remove
-    // the end-of-main proof without also removing this line.
-    assert!(squared == n.wrapping_mul(n));
-    eprintln!("contract: input parsed, squared without overflow, result printed — OK");
+    // Contract proof (square-kernel-v1): every invariant the YAML
+    // declares holds here at runtime.
+    assert_eq!(squared, n.wrapping_mul(n));
+    assert!(squared >= 0, "square result negative — contract violated");
+    assert_eq!(
+        square(n),
+        square(-n),
+        "square asymmetric — contract violated"
+    );
+    eprintln!(
+        "contract: square-kernel-v1 holds for n={n} — non-negative, symmetric, overflow-safe — OK"
+    );
 }

@@ -1,200 +1,65 @@
-//! Module 4 demo — runtime-enforced `ReviewFinding` contract.
+//! Module 4 demo — integer squaring kernel used as the sub-agent review target.
 //!
-//! A parallel sub-agent reviewing `m4-review::diff-target` returns YAML
-//! conforming to `contracts/review-finding.yaml`. The parent parses the
-//! response through `serde_yaml` into [`Review`], then calls
-//! [`Review::validate`] to enforce the invariants documented in the
-//! YAML schema. Anything that violates an invariant is rejected before
-//! the parent acts on the review.
+//! The provable contract is authored in
+//! `contracts/square-kernel-v1.yaml` (aprender kernel format) and
+//! validated with `pv validate`. This module is the Rust
+//! implementation the contract governs. Two parallel sub-agents
+//! review candidate edits against the YAML contract before the
+//! parent accepts a diff.
 //!
-//! Provable contract: the invariants named in the YAML schema are the
-//! same invariants enforced here. A unit test feeds both a valid and
-//! an invariant-violating fixture through [`Review::validate`] and
-//! asserts the expected outcome; `cargo test` exiting zero is the
-//! proof.
+//! Provable contract (square-kernel-v1): `square(n)` returns
+//! `Some(n·n)` when the product fits in `i32`, `None` on overflow,
+//! and never panics. The unit tests below restate every invariant
+//! from the YAML so `cargo test` is the runtime proof.
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Severity {
-    Info,
-    Warning,
-    Error,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum Verdict {
-    Approve,
-    RequestChanges,
-    Comment,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Category {
-    Correctness,
-    Style,
-    Performance,
-    Safety,
-    Readability,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Finding {
-    pub severity: Severity,
-    pub line: u32,
-    pub message: String,
-    pub category: Category,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Review {
-    pub reviewer: String,
-    pub target: String,
-    pub findings: Vec<Finding>,
-    pub verdict: Verdict,
-    pub rationale: String,
-}
-
-#[derive(Debug, thiserror::Error, PartialEq, Eq)]
-pub enum InvariantError {
-    #[error("reviewer must not be empty")]
-    EmptyReviewer,
-
-    #[error("target must not be empty")]
-    EmptyTarget,
-
-    #[error("findings exceeds max of 10 (got {0})")]
-    TooManyFindings(usize),
-
-    #[error("message at findings[{0}] must be 10..=280 chars (got {1})")]
-    MessageLengthOutOfRange(usize, usize),
-
-    #[error("line at findings[{0}] must be >= 1")]
-    LineZero(usize),
-
-    #[error(
-        "verdict=approve is incompatible with severity=error at findings[{0}]; \
-         use verdict=request-changes instead"
-    )]
-    ApproveWithError(usize),
-
-    #[error("severity=error at findings[{0}] requires verdict=request-changes (got {1:?})")]
-    ErrorRequiresRequestChanges(usize, Verdict),
-
-    #[error("rationale must be 20..=500 chars (got {0})")]
-    RationaleLengthOutOfRange(usize),
-
-    #[error("rationale must mention target {0:?} or its basename")]
-    RationaleMissingTarget(String),
-}
-
-impl Review {
-    /// Enforce every invariant documented in `contracts/review-finding.yaml`.
-    ///
-    /// This is the runtime half of the contract. The YAML schema is
-    /// the human-readable half; keeping both in sync is the whole point
-    /// of this module.
-    pub fn validate(&self) -> Result<(), InvariantError> {
-        if self.reviewer.trim().is_empty() {
-            return Err(InvariantError::EmptyReviewer);
-        }
-        if self.target.trim().is_empty() {
-            return Err(InvariantError::EmptyTarget);
-        }
-        if self.findings.len() > 10 {
-            return Err(InvariantError::TooManyFindings(self.findings.len()));
-        }
-
-        for (i, f) in self.findings.iter().enumerate() {
-            let msg_len = f.message.chars().count();
-            if !(10..=280).contains(&msg_len) {
-                return Err(InvariantError::MessageLengthOutOfRange(i, msg_len));
-            }
-            if f.line < 1 {
-                return Err(InvariantError::LineZero(i));
-            }
-        }
-
-        let first_error = self
-            .findings
-            .iter()
-            .position(|f| f.severity == Severity::Error);
-
-        match (self.verdict, first_error) {
-            (Verdict::Approve, Some(i)) => return Err(InvariantError::ApproveWithError(i)),
-            (v, Some(i)) if v != Verdict::RequestChanges => {
-                return Err(InvariantError::ErrorRequiresRequestChanges(i, v));
-            }
-            _ => {}
-        }
-
-        let rationale_len = self.rationale.chars().count();
-        if !(20..=500).contains(&rationale_len) {
-            return Err(InvariantError::RationaleLengthOutOfRange(rationale_len));
-        }
-
-        let basename = std::path::Path::new(&self.target)
-            .file_name()
-            .and_then(|s| s.to_str())
-            .unwrap_or(&self.target);
-        if !self.rationale.contains(&self.target) && !self.rationale.contains(basename) {
-            return Err(InvariantError::RationaleMissingTarget(self.target.clone()));
-        }
-
-        Ok(())
-    }
+/// Square an `i32`, returning `None` on overflow.
+///
+/// Contract: `contracts/square-kernel-v1.yaml` (obligation F-SQ-001).
+/// Every invariant is exercised in the module's unit tests.
+pub fn square(n: i32) -> Option<i32> {
+    n.checked_mul(n)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const VALID_YAML: &str = include_str!("../../contracts/review-finding.valid.yaml");
-    const INVALID_YAML: &str = include_str!("../../contracts/review-finding.invalid.yaml");
-
     #[test]
-    fn valid_fixture_parses_and_validates() {
-        let review: Review = serde_yaml::from_str(VALID_YAML).expect("parse");
-        review.validate().expect("valid fixture should validate");
+    fn square_at_zero() {
+        assert_eq!(square(0), Some(0));
     }
 
     #[test]
-    fn invalid_fixture_fails_approve_with_error_invariant() {
-        let review: Review = serde_yaml::from_str(INVALID_YAML).expect("parse");
-        let err = review.validate().expect_err("invalid fixture must fail");
-        assert!(
-            matches!(err, InvariantError::ApproveWithError(_)),
-            "expected ApproveWithError, got {err:?}"
-        );
+    fn square_at_one() {
+        assert_eq!(square(1), Some(1));
+        assert_eq!(square(-1), Some(1));
     }
 
     #[test]
-    fn empty_reviewer_rejected() {
-        let mut review: Review = serde_yaml::from_str(VALID_YAML).unwrap();
-        review.reviewer.clear();
-        assert_eq!(
-            review.validate().unwrap_err(),
-            InvariantError::EmptyReviewer
-        );
+    fn square_is_non_negative_when_some() {
+        for n in [-46340, -1000, -1, 0, 1, 1000, 46340] {
+            if let Some(x) = square(n) {
+                assert!(x >= 0, "square({n}) = {x} < 0");
+            }
+        }
     }
 
     #[test]
-    fn rationale_missing_target_rejected() {
-        let mut review: Review = serde_yaml::from_str(VALID_YAML).unwrap();
-        review.rationale = "a".repeat(50);
-        assert!(matches!(
-            review.validate().unwrap_err(),
-            InvariantError::RationaleMissingTarget(_)
-        ));
+    fn square_is_sign_symmetric() {
+        for n in [-46340, -1000, -1, 0, 1, 1000, 46340] {
+            assert_eq!(square(n), square(-n), "asymmetric at n={n}");
+        }
     }
 
     #[test]
-    fn line_zero_rejected() {
-        let mut review: Review = serde_yaml::from_str(VALID_YAML).unwrap();
-        review.findings[0].line = 0;
-        assert_eq!(review.validate().unwrap_err(), InvariantError::LineZero(0));
+    fn square_min_overflows() {
+        assert_eq!(square(i32::MIN), None);
+    }
+
+    #[test]
+    fn square_agrees_with_checked_mul() {
+        for n in [i32::MIN, -46341, -46340, 0, 46340, 46341, i32::MAX] {
+            assert_eq!(square(n), n.checked_mul(n), "divergence at n={n}");
+        }
     }
 }

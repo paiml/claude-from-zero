@@ -1,0 +1,109 @@
+metadata:
+  version: 1.0.0
+  created: '2026-04-24'
+  author: claude-from-zero Module 4
+  description: |
+    Provable contract for the integer squaring kernel used as the M4
+    sub-agent review target. The kernel fn square(n: i32) -> Option<i32>
+    returns Some(n*n) when the result fits in i32, None when it would
+    overflow. The function is total over the input i32 domain and never
+    panics. Two parallel sub-agents verify candidate implementations
+    against this contract before the parent accepts a diff.
+  references:
+  - 'Rust i32::checked_mul: https://doc.rust-lang.org/std/primitive.i32.html#method.checked_mul'
+  - 'aprender-contracts: https://github.com/paiml/aprender'
+equations:
+  square:
+    formula: square(n) = Some(n · n) when |n · n| ≤ i32::MAX, else None
+    domain: n ∈ [i32::MIN, i32::MAX]
+    codomain: Option<i32>
+    invariants:
+    - square(0) == Some(0)
+    - square(1) == Some(1)
+    - square(-1) == Some(1)
+    - square(n) == square(-n) for all n where both are Some
+    - square(n) returns Some(x) implies x >= 0
+    - square(i32::MIN) == None
+    - square(n) never panics
+    preconditions:
+    - n is a finite i32
+    postconditions:
+    - result.is_some() implies result.unwrap() >= 0
+    - result.is_some() implies result.unwrap() == n.wrapping_mul(n)
+    - result.is_none() implies n.checked_mul(n).is_none()
+    lean_theorem: Theorems.SquareKernel
+    guarantees:
+      shapes:
+        output: { dims: ["1"] }
+      constraints:
+      - output is Option<i32>
+      - output is non-negative when Some
+proof_obligations:
+- type: invariant
+  property: square at zero
+  formal: square(0) == Some(0)
+  applies_to: all
+- type: invariant
+  property: square non-negative
+  formal: forall n, square(n) == Some(x) implies x >= 0
+  applies_to: all
+- type: invariant
+  property: square symmetric
+  formal: forall n where both defined, square(n) == square(-n)
+  applies_to: all
+- type: invariant
+  property: square never panics
+  formal: forall n, square(n) terminates without panic
+  applies_to: all
+- type: bound
+  property: overflow detection
+  formal: square(i32::MIN) == None
+  applies_to: all
+- type: equivalence
+  property: agrees with checked_mul
+  formal: forall n, square(n) == n.checked_mul(n)
+  applies_to: all
+falsification_tests:
+- id: FALSIFY-SQ-001
+  rule: square at zero
+  prediction: square(0) returns Some(0)
+  test: direct test
+  if_fails: Implementation treats 0 as a special case incorrectly
+- id: FALSIFY-SQ-002
+  rule: square non-negative
+  prediction: square(n) returns Some(x) implies x >= 0
+  test: proptest with random n in [i32::MIN, i32::MAX]
+  if_fails: Implementation uses wrapping arithmetic and returns negative
+- id: FALSIFY-SQ-003
+  rule: square symmetric
+  prediction: square(n) == square(-n) for |n| < 46340
+  test: proptest with random n in [-46340, 46340]
+  if_fails: Implementation is not sign-symmetric
+- id: FALSIFY-SQ-004
+  rule: overflow detection
+  prediction: square(i32::MIN) returns None
+  test: direct test
+  if_fails: Implementation uses wrapping_mul or unchecked_mul
+- id: FALSIFY-SQ-005
+  rule: agrees with checked_mul
+  prediction: square(n) == n.checked_mul(n) for all n
+  test: proptest with random n in [i32::MIN, i32::MAX]
+  if_fails: Implementation diverges from standard overflow semantics
+- id: FALSIFY-SQ-006
+  rule: never panics
+  prediction: square(n) terminates normally for every i32 input
+  test: proptest with random n in [i32::MIN, i32::MAX]
+  if_fails: Implementation panics on overflow or sentinel values
+kani_harnesses:
+- id: KANI-SQ-001
+  obligation: square non-negative
+  bound: 32
+  strategy: bounded_int
+  solver: cadical
+qa_gate:
+  id: F-SQ-001
+  name: square-kernel-v1 Contract
+  description: Quality gate for integer squaring kernel used in M4 sub-agent review demo
+  checks:
+  - validation
+  - falsification
