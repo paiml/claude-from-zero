@@ -1,0 +1,10 @@
+[package]
+name = "m4-review"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "diff-target"
+path = "src/bin/diff_target.rs"

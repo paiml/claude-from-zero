@@ -1,0 +1,6 @@
+[package]
+name = "m2-hello"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
