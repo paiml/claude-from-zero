@@ -42,6 +42,22 @@ jobs:
       - name: Test workspace
         run: cargo test --workspace --locked
 
+      # 100% line coverage gate. main.rs files and src/bin/ shells are
+      # excluded — they're 1-3 line translations of testable run()
+      # functions in lib.rs, so all real logic is exercised by the
+      # unit tests above. If a new module lands without tests, this
+      # step fails the build.
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+
+      - name: 100% line-coverage gate
+        run: |
+          cargo llvm-cov --workspace --locked \
+            --ignore-filename-regex 'main\.rs|src/bin/' \
+            --fail-under-lines 100
+
       # m3-lint is excluded: its clippy warnings are the M3 lesson.
       - name: Clippy (m2-hello + m4-review, deny warnings)
         run: cargo clippy -p m2-hello -p m4-review --all-targets --locked -- -D warnings
@@ -87,3 +103,16 @@ jobs:
           grep -q "needless_return" /tmp/m3-clippy.txt \
             || { echo "ERROR: clippy output missing needless_return lint"; exit 1; }
           echo "M3 planted lints still fire — lesson intact."
+
+      # PMAT compliance check. Runs advisory — surfaces every CB-* gate
+      # in the build log so reviewers see the score, but does not fail
+      # the build. The teaching repo intentionally ships a m3-lint
+      # crate with clippy warnings, which the strict pmat rule set
+      # would flag; the negative-clippy gate above is the hard
+      # enforcement for that lesson.
+      - name: Install pmat
+        run: cargo install --locked pmat
+
+      - name: pmat comply (advisory)
+        continue-on-error: true
+        run: pmat comply check

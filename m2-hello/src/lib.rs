@@ -9,6 +9,25 @@ pub fn add(a: i32, b: i32) -> i32 {
     a.wrapping_add(b)
 }
 
+/// Runtime proof that `add` satisfies its provable contract.
+///
+/// Returns the success line `main` prints; panics (via `assert_eq!`)
+/// if any invariant is violated. Refactored out of `main.rs` so the
+/// contract proof itself is unit-testable — `main` is a one-line shell
+/// that prints whatever this returns.
+pub fn run() -> &'static str {
+    assert_eq!(add(2, 3), 5);
+    assert_eq!(add(3, 2), add(2, 3), "commutativity violated");
+    assert_eq!(
+        add(add(1, 2), 3),
+        add(1, add(2, 3)),
+        "associativity violated"
+    );
+    assert_eq!(add(42, 0), 42, "identity violated");
+    assert_eq!(add(-7, 7), 0, "inverse violated");
+    "contract: add is commutative, associative, has identity 0 — OK"
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -35,5 +54,14 @@ mod tests {
     #[test]
     fn add_wraps_on_overflow() {
         assert_eq!(add(i32::MAX, 1), i32::MIN);
+    }
+
+    #[test]
+    fn run_proves_contract_and_returns_success_line() {
+        let line = run();
+        assert!(line.contains("commutative"));
+        assert!(line.contains("associative"));
+        assert!(line.contains("identity 0"));
+        assert!(line.contains("OK"));
     }
 }

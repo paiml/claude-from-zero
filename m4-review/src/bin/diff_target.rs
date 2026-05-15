@@ -11,48 +11,30 @@
 //! sub-agent runs `pv validate` + `pv status` on the contract,
 //! inspects the implementation, and returns a verdict. The parent
 //! rejects any verdict that contradicts a documented invariant.
+//!
+//! All logic lives in `m4_review::diff_target_run`. This `main` is
+//! a thin translation of the outcome enum to stdout/stderr + exit
+//! codes, so the lib is the testable seam.
 
 use std::env;
 use std::process;
 
-use m4_review::square;
-
-fn parse_arg(args: &[String]) -> Result<i32, String> {
-    let raw = args
-        .get(1)
-        .ok_or_else(|| "missing integer argument".to_string())?;
-    raw.parse::<i32>()
-        .map_err(|e| format!("'{raw}' is not a valid i32: {e}"))
-}
+use m4_review::{diff_target_run, DiffTargetOutcome};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-
-    let n = match parse_arg(&args) {
-        Ok(n) => n,
-        Err(msg) => {
+    match diff_target_run(&args) {
+        DiffTargetOutcome::Ok { squared, marker } => {
+            println!("{squared}");
+            eprintln!("{marker}");
+        }
+        DiffTargetOutcome::ParseError(msg) => {
             eprintln!("error: {msg}");
             process::exit(2);
         }
-    };
-
-    let Some(squared) = square(n) else {
-        eprintln!("error: {n}² overflows i32");
-        process::exit(2);
-    };
-
-    println!("{squared}");
-
-    // Contract proof (square-kernel-v1): every invariant the YAML
-    // declares holds here at runtime.
-    assert_eq!(squared, n.wrapping_mul(n));
-    assert!(squared >= 0, "square result negative — contract violated");
-    assert_eq!(
-        square(n),
-        square(-n),
-        "square asymmetric — contract violated"
-    );
-    eprintln!(
-        "contract: square-kernel-v1 holds for n={n} — non-negative, symmetric, overflow-safe — OK"
-    );
+        DiffTargetOutcome::Overflow(n) => {
+            eprintln!("error: {n}² overflows i32");
+            process::exit(2);
+        }
+    }
 }
