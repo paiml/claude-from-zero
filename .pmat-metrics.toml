@@ -1,0 +1,26 @@
+# PMAT quality thresholds for claude-from-zero — the companion repo
+# for Rust for Data Engineering c9 "Claude from Zero". The repo is a
+# teaching artifact: 3 small crates that demonstrate Claude-driven
+# development with provable contracts and clippy. Thresholds reflect
+# the educational scope.
+
+[quality]
+# 100% line coverage is the gate (excluding main.rs / src/bin/ thin
+# shells — see ci.yml --ignore-filename-regex). The repo's whole point
+# is showing how `cargo test` is the runtime proof, so the bar is
+# absolute.
+min_coverage = 100.0
+
+# All clippy warnings on m2-hello + m4-review are denied (`-D warnings`
+# in CI). m3-lint INTENTIONALLY ships clippy warnings — they are the
+# M3 lesson. The CI workflow asserts they still fire (negative gate).
+max_clippy_warnings = 0
+
+# Demo crates stay shallow on purpose so learners can follow them
+# end-to-end in one read. If any function exceeds 10 it probably
+# means the demo grew too big; split it.
+max_cyclomatic_complexity = 10
+
+# Lean code on purpose. The provable-contract pattern keeps `square`,
+# `add`, and friends to a handful of lines each.
+max_function_length = 40

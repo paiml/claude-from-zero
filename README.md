@@ -5,6 +5,9 @@
 </p>
 
 [![CI](https://github.com/paiml/claude-from-zero/actions/workflows/ci.yml/badge.svg)](https://github.com/paiml/claude-from-zero/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
+[![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org/)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](#install)
 
 Companion repository for the **Claude from Zero** Coursera course —
 course 9 of the [Rust for Data Engineering](https://www.coursera.org/specializations/rust-for-data-engineering)
@@ -84,3 +87,36 @@ For real data-engineering work with this toolkit, continue with the
 rest of the
 [Rust for Data Engineering](https://www.coursera.org/specializations/rust-for-data-engineering)
 specialization.
+
+## Install
+
+Clone the repo and build with stable Rust 1.75+:
+
+```bash
+git clone https://github.com/paiml/claude-from-zero
+cd claude-from-zero
+cargo build --workspace --locked
+cargo test  --workspace --locked
+```
+
+Coverage (matches the CI gate at 100%):
+
+```bash
+cargo install cargo-llvm-cov  # one-time
+cargo llvm-cov --workspace \
+  --ignore-filename-regex 'main\.rs|src/bin/' \
+  --fail-under-lines 100
+```
+
+Optional — the provable-contract validator and the PAIML compliance
+checker the CI workflow runs:
+
+```bash
+cargo install aprender-contracts-cli  # provides `pv`
+cargo install pmat                    # PAIML compliance toolkit
+```
+
+## License
+
+Dual-licensed under MIT or Apache-2.0 — pick the one that fits your
+downstream use. SPDX: `MIT OR Apache-2.0`.

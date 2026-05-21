@@ -8,7 +8,8 @@
     stroke_width_min: 4.0
     fill_opacity_min: 0.25
 -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" role="img" aria-labelledby="hero-title">
+  <title id="hero-title">Claude from Zero — Claude Code, skills, sub-agents, and provable contracts</title>
 
   <!-- Background -->
   <rect width="1200" height="600" fill="#0d1117"/>
